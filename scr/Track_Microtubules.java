@@ -54,10 +54,6 @@ public class Track_Microtubules implements PlugIn {
 			IJ.log("Linking spots ...");
 			for (int t = 0; t < nt - 1; t++) {
 				imp.setSlice(t+1);
-				// Do a first linking based on distance, so that we can calculate
-				// double[][] D = tracker.getDistanceMatrix(spots, t);
-				// tracker.thresholdLinking(D, spots, t, maxSpotMovement);
-				// Do a second linking with the full cost function
 				double[][] C = tracker.getCostMatrix(spots, imp,
 													 betaDist, betaIntensity, betaSpeed, betaAngle, numberOfFramesInPast);
 				tracker.nearestNeighbourLinking(C, spots, t, maxSpotMovement);
@@ -67,13 +63,11 @@ public class Track_Microtubules implements PlugIn {
 			// Calculate trajectory length, speed and angle of all particles
 			Overlay overlayTraces = new Overlay();
 			int numResults = 0;										// keep track of the number of particles with a valid speed
-			ArrayList<Trace> allTraces = new ArrayList<Trace>();
 			ArrayList[] trajectoryLengthDistribution = new ArrayList[nt]; 	// List of arraylists with angles
 			ArrayList[] speedDistribution = new ArrayList[nt]; 				// List of arraylists with speeds
 			ArrayList[] angleDistribution = new ArrayList[nt]; 				// List of arraylists with angles
 			for (int t = 0; t < nt; t++) {
 				IJ.log("Time = "+t);
-				ArrayList<Double> traces = new ArrayList<Double>(); // Arraylist of doubles
 				ArrayList<Double> lengths = new ArrayList<Double>(); // Arraylist of doubles
 				ArrayList<Double> speeds = new ArrayList<Double>(); // Arraylist of doubles
 				ArrayList<Double> angles = new ArrayList<Double>(); // Arraylist of doubles
@@ -82,18 +76,11 @@ public class Track_Microtubules implements PlugIn {
 					lengths.add( stats[0] );
 					speeds.add( stats[1] );
 					angles.add( stats[2] );
-					
-					IJ.log("Spot at time "+t+", is end = "+spot.isTraceEnd()+", trace length = "+stats[0]);
-					
+					// If the spot is at the end of the trace, 
+					// and if the trace is long enough, then draw its trace.					
 					if (spot.isTraceEnd() & (stats[0] > 5)){
 						drawTrace(overlayTraces, spot, spots);
 					}
-					//if (spot.isTraceEnd()) {
-					//	Trace trace = new Trace(spot);
-					//	trace.colorByAngle(spots);
-					//	allTraces.add(trace);
-					//	IJ.log("Added trace of length " + spot.trace.size());
-					//}
 					numResults += 1;
 				}
 				trajectoryLengthDistribution[t] = lengths;
