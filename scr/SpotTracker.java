@@ -1,36 +1,65 @@
 import java.util.ArrayList;
+
+import ij.IJ;
 import ij.ImagePlus;
 
 public class SpotTracker {
 	
-	public double cost(Spot current, Spot next, ImagePlus imp, double lambda, double dMax, double fMax) {
+	public double cost(Spot current, Spot next, ArrayList<Spot> spots[], ImagePlus imp, 
+					   double dMax, double fMax, double sMax, double tMax,
+					   double betaDist, double betaIntensity, double betaSpeed, double betaAngle, int numberOfFramesInPast) {
 		// Implementation of cost function.
 		// This function gets the cost for particles current and next.
 		// Note that I added a method intensityDifference to the Spot class,
 		// which calculates the difference in mean intensity between the spots current and next.
 		double dist = current.distance(next);
 		double intensityDifference = current.intensityDifference(next, imp);
-		return (1-lambda)*dist/dMax + lambda*intensityDifference/fMax;
+		double speedDifference = current.speedDifference(next, spots, numberOfFramesInPast);
+		double thetaDifference = current.angleDifference(next, spots, numberOfFramesInPast);
+		//return betaDist * dist/dMax + betaIntensity * intensityDifference/fMax;
+		return betaDist * dist/dMax + betaIntensity * intensityDifference/fMax 
+				+ betaSpeed * + speedDifference/sMax + betaAngle * thetaDifference/tMax;
 	}
 	
-	public double[][] getCostMatrix(ArrayList<Spot> spots[], ImagePlus imp, double lambda){
+	public double[][] getDistanceMatrix(ArrayList<Spot> spots[], int t){
+		// Get max distance
+		double dMax = -1;
+		for (Spot current: spots[t]) {
+			for (Spot next: spots[t+1]) {
+				dMax = Math.max(dMax, current.distance(next));
+			}
+		}
+		// Fill distance matrix
+		double[][] D = new double[spots[t].size()][spots[t+1].size()];
+		for (int i = 0; i < spots[t].size(); i++) {
+			Spot current = spots[t].get(i);
+			for (int j = 0; j < spots[t+1].size(); j++) {
+				Spot next = spots[t+1].get(j);
+				D[i][j] = current.distance(next) / dMax;
+			}
+		}
+		return D;
+	}
+	
+	public double[][] getCostMatrix(ArrayList<Spot> spots[], ImagePlus imp,
+									double betaDist, double betaIntensity, double betaSpeed, double betaAngle, int numberOfFramesInPast){
 		// This function returns an AxB matrix, where A is the number of particles on timeframe t
 		// and B is the number of particles on timeframe t+1.
 		// C_ij is the cost function for particle i (on frame t) and particle j (on frame t+1).
 		// Note that I added a method intensityDifference to the Spot class.
 		
 		int t = imp.getCurrentSlice() - 1;		
-		// Get max distance and intensity (used for normalization afterwards)
-		double dMax = 0;
-		double fMax = 0;
+		// Get max distance, delta_intensity, delta_speed and delta_theta (used for normalization afterwards)
+		double dMax = -1;
+		double fMax = -1;
+		double sMax = -1;
+		double tMax = -1;
 		for (Spot current: spots[t]) {
 			for (Spot next: spots[t+1]) {
-				if (current.distance(next) > dMax) {
-					dMax = current.distance(next);
-				}
-				if (current.intensityDifference(next, imp) > fMax) {
-					fMax = current.intensityDifference(next, imp);
-				}
+				dMax = Math.max(dMax, current.distance(next));
+				fMax = Math.max(fMax, current.intensityDifference(next, imp));
+				sMax = Math.max(sMax, current.speedDifference(next, spots, numberOfFramesInPast));
+				tMax = Math.max(tMax, current.angleDifference(next, spots, numberOfFramesInPast));
 			}
 		}
 		// Fill cost matrix
@@ -39,7 +68,8 @@ public class SpotTracker {
 			Spot current = spots[t].get(i);
 			for (int j = 0; j < spots[t+1].size(); j++) {
 				Spot next = spots[t+1].get(j);
-				C[i][j] = cost(current, next, imp, lambda, dMax, fMax);
+				C[i][j] = cost(current, next, spots, imp, dMax, fMax, sMax, tMax, 
+							   betaDist, betaIntensity, betaSpeed, betaAngle, numberOfFramesInPast);
 			}
 		}
 		return C;
@@ -114,8 +144,11 @@ public class SpotTracker {
 			if (closestToNext[closestToCurrent[i]]==i) {
 				Spot current = spots[t].get(i);
 				Spot next = spots[t+1].get(closestToCurrent[i]);
-				if (current.distance(next) < distanceThreshold)
-					current.link(spots[t+1].get(closestToCurrent[i]));
+				if (current.distance(next) < distanceThreshold) {
+					next.link(current);
+					next.trace.addAll(current.trace);
+					next.trace.add(i);
+				}
 			}
 		}
 	}
