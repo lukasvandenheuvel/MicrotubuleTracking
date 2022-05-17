@@ -1,11 +1,15 @@
 import java.awt.Color;
 import java.util.ArrayList;
+import java.util.Arrays;
+
+import ij.CompositeImage;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.Line;
 import ij.gui.Overlay;
 import ij.gui.Plot;
 import ij.plugin.PlugIn;
+import ij.process.ImageProcessor;
 
 public class Track_Microtubules implements PlugIn {
 	
@@ -14,17 +18,17 @@ public class Track_Microtubules implements PlugIn {
 			// Denoising parameters
 			double sigmaX = 1;				// smoothing sigma in X
 			double sigmaY = 1;				// smoothing sigma in Y
-			double sigmaT = 1;				// smoothing sigma in time
+			double sigmaT = 2;				// smoothing sigma in time
 			// Cost function parameters
 			double betaDist = 0;
 			double betaIntensity = 0;
 			double betaSpeed = 1; 
 			double betaAngle = 0;
 			// Other parameters 
-			double sigmaDOG = 1;			// sigma for DoG
-			int maxSpotDistance = 4;    	// maximal distance between neighboring spots
-			double DOGthreshold = 1;		// threshold of localmax after DoG filter
-			double maxSpotMovement = 6; 	// maximal movement of a spot in one timeframe
+			double sigmaDOG = 5;			// sigma for DoG
+			int maxSpotDistance = 5;    	// maximal distance between neighboring spots
+			double DOGthreshold = 5;		// threshold of localmax after DoG filter
+			double maxSpotMovement = 15; 	// maximal movement of a spot in one timeframe
 			int numberOfFramesInPast = 10; 	// number of frames in the past used to calculate speed of a spot
 			
 			// Import classes
@@ -35,21 +39,25 @@ public class Track_Microtubules implements PlugIn {
 			IJ.log("Starting the script");
 			ImagePlus imp = IJ.getImage();
 			
-			// Do the preprocessing
-			IJ.log("Preprocessing ...");
+			// Do the preprocessing (denoising + background subtraction)
+			IJ.log("Blurring ...");
 			denoiser.gaussianBlur3D(imp, sigmaX, sigmaY, sigmaT);
 			imp = denoiser.subtractBackground(imp);
 			
 			// Run difference of Gaussian
+			// To save memory, we do this on each slice seperately
 			IJ.log("Running DoG ...");
 			int nt = imp.getNFrames();
-			ImagePlus dog = detector.dog(imp, sigmaDOG);
-						
-			// Detect spots by detecting local maxima in DoG
-			IJ.log("Detecting spots ...");
-			ArrayList<Spot> localmax[] = detector.localMax(dog, maxSpotDistance, DOGthreshold);
-			ArrayList<Spot> spots[] = detector.filter(localmax, maxSpotDistance);
-			
+			ArrayList<Spot> spots[] = new Spots[nt];
+			for (int t = 0; t < nt; t++) {
+				IJ.log("Time "+t);
+				imp.setSlice(t + 1);
+				ImagePlus dog = detector.dog(imp, sigmaDOG);
+				// Detect spots by detecting local maxima in DoG
+				ArrayList<Spot> localmax = detector.localMax(imp, maxSpotDistance, DOGthreshold, t);
+				spots[t] = detector.filter(localmax, maxSpotDistance);
+			}
+									
 			// Link spots
 			IJ.log("Linking spots ...");
 			for (int t = 0; t < nt - 1; t++) {
@@ -76,11 +84,6 @@ public class Track_Microtubules implements PlugIn {
 					lengths.add( stats[0] );
 					speeds.add( stats[1] );
 					angles.add( stats[2] );
-					// If the spot is at the end of the trace, 
-					// and if the trace is long enough, then draw its trace.					
-					if (spot.isTraceEnd() & (stats[0] > 5)){
-						drawTrace(overlayTraces, spot, spots);
-					}
 					numResults += 1;
 				}
 				trajectoryLengthDistribution[t] = lengths;
@@ -104,6 +107,17 @@ public class Track_Microtubules implements PlugIn {
 					count += 1;
 				}
 			}
+			
+			// If the spot is at the end of the trace, 
+			// and if the trace is long enough, then draw its trace.
+			for (int t = 0; t < nt; t++) {
+				for (Spot spot : spots[t]) {
+					if (spot.isTraceEnd() & (spot.trace.size() > 5)){
+						drawTrace(overlayTraces, spot, spots);
+					}
+				}
+			}
+			
 			// Add results to plots
 			Plot plotLength = new Plot("Results traces", "Time", "Trajectory lengts");
 			plotLength.add("circle", xArray, resultsLength);
@@ -120,9 +134,9 @@ public class Track_Microtubules implements PlugIn {
 			// Draw traces as overlay
 			Overlay overlaySpots = new Overlay();
 			drawSpots(overlaySpots, spots);
-			//drawTraces(overlay, allTraces, spots);
 			imp.setOverlay(overlayTraces);
 			imp.show();
+			makeColorBar(256, 50, "0", "2 pi");
 		
 			IJ.log("Success!");
 
@@ -155,5 +169,40 @@ public class Track_Microtubules implements PlugIn {
 			line.setStrokeWidth(1);
 			overlay.add(line);
 		}
+	}
+	
+	private void makeColorBar(int width, int height, String startValue, String endValue) {
+		// Create HSB colorbar.
+		ImagePlus colorbar = IJ.createImage("Color bar", "RGB", width, height, 1);
+		colorbar = new CompositeImage(colorbar, IJ.COMPOSITE);
+		ImageProcessor ipRed = colorbar.getChannelProcessor();
+		ImageProcessor ipGreen = colorbar.getChannelProcessor();
+		ImageProcessor ipBlue = colorbar.getChannelProcessor();
+		
+		// Fill in the pixels
+		for (int x = 0; x < width; x++) {
+			Color HSBColor = Color.getHSBColor((float)x / width, 1f, 1f);
+			int[] columnRed = new int[height];
+			int[] columnGreen = new int[height];
+			int[] columnBlue = new int[height];
+			Arrays.fill(columnRed, HSBColor.getRed());
+			Arrays.fill(columnGreen, HSBColor.getGreen());
+			Arrays.fill(columnBlue, HSBColor.getBlue());
+			// Put pixels as columns
+			colorbar.setPosition(1, 1, 1);
+			ipRed.putColumn(x, 0, columnRed, height);
+			colorbar.setPosition(2, 1, 1);
+			ipGreen.putColumn(x, 0, columnGreen, height);
+			colorbar.setPosition(3, 1, 1);
+			ipBlue.putColumn(x, 0, columnBlue, height);
+		}
+		IJ.run(colorbar, "RGB Color", "");
+		ImageProcessor ip = colorbar.getProcessor();
+		ip.setFontSize(14);
+		ip.setJustification(ip.LEFT_JUSTIFY);
+		ip.drawString("- "+startValue, 0, (int)height/2 + 7);
+		ip.setJustification(ip.RIGHT_JUSTIFY);
+		ip.drawString(endValue+" -", width, (int)height/2 + 7);
+		colorbar.show();
 	}
 }
