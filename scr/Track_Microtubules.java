@@ -25,8 +25,8 @@ public class Track_Microtubules implements PlugIn {
 			// Cost function parameters
 			double betaDist = 0;
 			double betaIntensity = 0;
-			double betaSpeed = 1; 
-			double betaAngle = 0;
+			double betaSpeed = 0.5; 
+			double betaAngle = 0.5;
 			// Other parameters 
 			double sigmaDOG = 5;			// sigma for DoG
 			int maxSpotDistance = 5;    	// maximal distance between neighboring spots
@@ -59,9 +59,6 @@ public class Track_Microtubules implements PlugIn {
 				IJ.log("Time "+t);
 				imp.setSlice(t + 1);
 				ImagePlus dog = detector.dog(imp, sigmaDOG);
-				if(t==31) {
-					dog.show();IJ.log("end"); return;
-				}
 				// Detect spots by detecting local maxima in DoG 
 				// shouldn't it be dog instead of imp here ?
 				ArrayList<Spot> localmax = detector.localMax(dog, maxSpotDistance, DOGthreshold, t);

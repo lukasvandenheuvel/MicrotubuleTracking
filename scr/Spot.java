@@ -67,7 +67,7 @@ public class Spot {
 			double angle = Math.atan2(spot.y - this.y, spot.x - this.x);
 			difference = Math.abs(stats[2] - angle);
 		}
-		return difference;
+		return difference/(2*Math.PI);
 	}
 	
 	public double[] trajectoryStatistics(ArrayList<Spot> spots[], int numberOfFramesInPast) {
