@@ -1,5 +1,3 @@
-package MicrotubuleTracking.scr; // not sure what this does
-
 import java.awt.Color;
 import java.util.ArrayList;
 

@@ -1,5 +1,3 @@
-package MicrotubuleTracking.scr; // not sure what this does
-
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -7,6 +5,7 @@ import java.util.Arrays;
 import ij.CompositeImage;
 import ij.IJ;
 import ij.ImagePlus;
+import ij.gui.GenericDialog;
 import ij.gui.Line;
 import ij.gui.Overlay;
 import ij.gui.Plot;
@@ -17,59 +16,73 @@ public class Track_Microtubules implements PlugIn {
 	
 	public void run(String arg) {
 		
-		
-			// Denoising parameters
-			double sigmaX = 1;				// smoothing sigma in X
-			double sigmaY = 1;				// smoothing sigma in Y
-			double sigmaT = 2;				// smoothing sigma in time
-			// Cost function parameters
-			double betaDist = 0;
-			double betaIntensity = 0;
-			double betaSpeed = 0.5; 
-			double betaAngle = 0.5;
-			// Other parameters 
-			double sigmaDOG = 5;			// sigma for DoG
-			int maxSpotDistance = 5;    	// maximal distance between neighboring spots
-			double DOGthreshold = 0.5;		// threshold of localmax after DoG filter
-			double maxSpotMovement = 15; 	// maximal movement of a spot in one timeframe
-			int numberOfFramesInPast = 10; 	// number of frames in the past used to calculate speed of a spot
-			
 			// Import classes
 			Denoiser denoiser = new Denoiser();
 			SpotDetector detector = new SpotDetector();
 			SpotTracker tracker = new SpotTracker();
+		
+			// Get original image
+			ImagePlus original = IJ.getImage();
+		
+			// GUI 1: Denoising GUI
+			GenericDialog gd_denoise = new SetupDenoisingDialog().showDialog(original);
+			if (gd_denoise.wasCanceled()) {
+				return;
+			}
+			// Get denoising parameters
+			double sigmaXY = gd_denoise.getNextNumber();
+			double sigmaT = gd_denoise.getNextNumber();
 			
-			IJ.log("Starting the script");
-//			ImagePlus imp = IJ.getImage();
-			ImagePlus imp = IJ.openImage("/home/lucas/Documents/bioimage_informatics/miniproject/Hela_EB3.tif");
-			imp.show();
-						
+			ImagePlus img = original.duplicate();
+			original.hide();
+			img.show();
+			
 			// Do the preprocessing (denoising + background subtraction)
 			IJ.log("Blurring ...");
-			denoiser.gaussianBlur3D(imp, sigmaX, sigmaY, sigmaT);
-	
-			imp = denoiser.subtractBackground(imp);
+			denoiser.gaussianBlur3D(img, sigmaXY, sigmaT);
+			ImagePlus medianProj = denoiser.medianProjection(img);
+			img = denoiser.subtractBackground(img, medianProj);
+			img.show();
+			
+			// GUI 2: Spot detection GUI
+			GenericDialog gd_detection = new SetupDetectionDialog().showDialog(original);
+			if (gd_detection.wasCanceled()) {
+				return;
+			}
+			// Get spot detection parameters
+			double sigmaDOG = gd_detection.getNextNumber();					// sigma for DoG
+			double DOGthreshold = gd_detection.getNextNumber();				// threshold of localmax after DoG filter
+			int maxSpotDistance = (int) gd_detection.getNextNumber();    	// maximal distance between neighboring spots
+			
+			// Get spot tracking parameters
+			double maxSpotMovement = gd_detection.getNextNumber(); 			// maximal movement of a spot in one timeframe
+			int numberOfFramesInPast = (int) gd_detection.getNextNumber(); 	// number of frames in the past used to calculate speed of a spot
 
+			// Get cost function parameters
+			double betaDist = gd_detection.getNextNumber();
+			double betaIntensity = gd_detection.getNextNumber();
+			double betaSpeed = gd_detection.getNextNumber(); 
+			double betaAngle = gd_detection.getNextNumber();
+						
 			// Run difference of Gaussian
 			// To save memory, we do this on each slice seperately
 			IJ.log("Running DoG ...");
-			int nt = imp.getNFrames();
+			int nt = img.getNFrames();
 			ArrayList<Spot> spots[] = new Spots[nt];
 			for (int t = 0; t < nt; t++) {
-//				IJ.log("Time "+t);
-				imp.setSlice(t + 1);
-				ImagePlus dog = detector.dog(imp, sigmaDOG);
-				// Detect spots by detecting local maxima in DoG 
+				IJ.log("Running DoG, timeframe "+t);
+				img.setSlice(t + 1);
+				ImagePlus dog = detector.dog(img, sigmaDOG);
+				// Detect spots by detecting local maxima in DoG
 				ArrayList<Spot> localmax = detector.localMax(dog, maxSpotDistance, DOGthreshold, t);
 				spots[t] = detector.filter(localmax, maxSpotDistance);
 			}
-			
 									
 			// Link spots
 			IJ.log("Linking spots ...");
 			for (int t = 0; t < nt - 1; t++) {
-				imp.setSlice(t+1);
-				double[][] C = tracker.getCostMatrix(spots, imp,
+				img.setSlice(t+1);
+				double[][] C = tracker.getCostMatrix(spots, img,
 													 betaDist, betaIntensity, betaSpeed, betaAngle, numberOfFramesInPast);
 				tracker.nearestNeighbourLinking(C, spots, t, maxSpotMovement);
 				
@@ -141,8 +154,8 @@ public class Track_Microtubules implements PlugIn {
 			// Draw traces as overlay
 			Overlay overlaySpots = new Overlay();
 			drawSpots(overlaySpots, spots);
-			imp.setOverlay(overlayTraces);
-			imp.show();
+			original.setOverlay(overlayTraces);
+			original.show();
 			makeColorBar(256, 50, "0", "2 pi");
 		
 			IJ.log("Success!");
@@ -163,7 +176,7 @@ public class Track_Microtubules implements PlugIn {
 		Spot first = spots[startTime].get(spot.trace.get(0));
 		double angle = Math.atan2(spot.y - first.y, spot.x - first.x);
 		double rescaledAngle = (angle + Math.PI) / Math.PI;
-		Color color = Color.getHSBColor((float)rescaledAngle, 1f, 1f); // saturation and brightness =1, change hue
+		Color color = Color.getHSBColor((float)rescaledAngle, 1f, 1f);
 		color = new Color(color.getRed(), color.getGreen(), color.getBlue(), 120);
 		
 		// Trace back this trace and draw a line
@@ -206,9 +219,9 @@ public class Track_Microtubules implements PlugIn {
 		IJ.run(colorbar, "RGB Color", "");
 		ImageProcessor ip = colorbar.getProcessor();
 		ip.setFontSize(14);
-		ip.setJustification(ImageProcessor.LEFT_JUSTIFY);
+		ip.setJustification(ip.LEFT_JUSTIFY);
 		ip.drawString("- "+startValue, 0, (int)height/2 + 7);
-		ip.setJustification(ImageProcessor.RIGHT_JUSTIFY);
+		ip.setJustification(ip.RIGHT_JUSTIFY);
 		ip.drawString(endValue+" -", width, (int)height/2 + 7);
 		colorbar.show();
 	}

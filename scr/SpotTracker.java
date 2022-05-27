@@ -1,5 +1,3 @@
-package MicrotubuleTracking.scr; // not sure what this does
-
 import java.util.ArrayList;
 
 import ij.IJ;
@@ -20,7 +18,7 @@ public class SpotTracker {
 		double thetaDifference = current.angleDifference(next, spots, numberOfFramesInPast);
 		//return betaDist * dist/dMax + betaIntensity * intensityDifference/fMax;
 		return betaDist * dist/dMax + betaIntensity * intensityDifference/fMax 
-				+ betaSpeed * speedDifference/sMax + betaAngle * thetaDifference/tMax;
+				+ betaSpeed * + speedDifference/sMax + betaAngle * thetaDifference/tMax;
 	}
 	
 	public double[][] getDistanceMatrix(ArrayList<Spot> spots[], int t){
