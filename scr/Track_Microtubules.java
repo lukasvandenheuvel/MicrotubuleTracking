@@ -1,3 +1,5 @@
+package MicrotubuleTracking.scr; // not sure what this does
+
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -15,6 +17,7 @@ public class Track_Microtubules implements PlugIn {
 	
 	public void run(String arg) {
 		
+		
 			// Denoising parameters
 			double sigmaX = 1;				// smoothing sigma in X
 			double sigmaY = 1;				// smoothing sigma in Y
@@ -27,7 +30,7 @@ public class Track_Microtubules implements PlugIn {
 			// Other parameters 
 			double sigmaDOG = 5;			// sigma for DoG
 			int maxSpotDistance = 5;    	// maximal distance between neighboring spots
-			double DOGthreshold = 5;		// threshold of localmax after DoG filter
+			double DOGthreshold = 0.5;		// threshold of localmax after DoG filter
 			double maxSpotMovement = 15; 	// maximal movement of a spot in one timeframe
 			int numberOfFramesInPast = 10; 	// number of frames in the past used to calculate speed of a spot
 			
@@ -37,13 +40,16 @@ public class Track_Microtubules implements PlugIn {
 			SpotTracker tracker = new SpotTracker();
 			
 			IJ.log("Starting the script");
-			ImagePlus imp = IJ.getImage();
-			
+//			ImagePlus imp = IJ.getImage();
+			ImagePlus imp = IJ.openImage("/home/lucas/Documents/bioimage_informatics/miniproject/Hela_EB3.tif");
+			imp.show();
+						
 			// Do the preprocessing (denoising + background subtraction)
 			IJ.log("Blurring ...");
 			denoiser.gaussianBlur3D(imp, sigmaX, sigmaY, sigmaT);
+	
 			imp = denoiser.subtractBackground(imp);
-			
+
 			// Run difference of Gaussian
 			// To save memory, we do this on each slice seperately
 			IJ.log("Running DoG ...");
@@ -53,10 +59,15 @@ public class Track_Microtubules implements PlugIn {
 				IJ.log("Time "+t);
 				imp.setSlice(t + 1);
 				ImagePlus dog = detector.dog(imp, sigmaDOG);
-				// Detect spots by detecting local maxima in DoG
-				ArrayList<Spot> localmax = detector.localMax(imp, maxSpotDistance, DOGthreshold, t);
+				if(t==31) {
+					dog.show();IJ.log("end"); return;
+				}
+				// Detect spots by detecting local maxima in DoG 
+				// shouldn't it be dog instead of imp here ?
+				ArrayList<Spot> localmax = detector.localMax(dog, maxSpotDistance, DOGthreshold, t);
 				spots[t] = detector.filter(localmax, maxSpotDistance);
 			}
+			
 									
 			// Link spots
 			IJ.log("Linking spots ...");
@@ -156,7 +167,7 @@ public class Track_Microtubules implements PlugIn {
 		Spot first = spots[startTime].get(spot.trace.get(0));
 		double angle = Math.atan2(spot.y - first.y, spot.x - first.x);
 		double rescaledAngle = (angle + Math.PI) / Math.PI;
-		Color color = Color.getHSBColor((float)rescaledAngle, 1f, 1f);
+		Color color = Color.getHSBColor((float)rescaledAngle, 1f, 1f); // saturation and brightness =1, change hue
 		color = new Color(color.getRed(), color.getGreen(), color.getBlue(), 120);
 		
 		// Trace back this trace and draw a line
@@ -199,9 +210,9 @@ public class Track_Microtubules implements PlugIn {
 		IJ.run(colorbar, "RGB Color", "");
 		ImageProcessor ip = colorbar.getProcessor();
 		ip.setFontSize(14);
-		ip.setJustification(ip.LEFT_JUSTIFY);
+		ip.setJustification(ImageProcessor.LEFT_JUSTIFY);
 		ip.drawString("- "+startValue, 0, (int)height/2 + 7);
-		ip.setJustification(ip.RIGHT_JUSTIFY);
+		ip.setJustification(ImageProcessor.RIGHT_JUSTIFY);
 		ip.drawString(endValue+" -", width, (int)height/2 + 7);
 		colorbar.show();
 	}
