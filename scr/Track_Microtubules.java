@@ -23,9 +23,9 @@ public class Track_Microtubules implements PlugIn {
 			double sigmaY = 1;				// smoothing sigma in Y
 			double sigmaT = 2;				// smoothing sigma in time
 			// Cost function parameters
-			double betaDist = 0.5;
+			double betaDist = 0;
 			double betaIntensity = 0;
-			double betaPredict = 0.5; 
+			double betaPredict = 1; 
 			// Other parameters 
 			double sigmaDOG = 5;			// sigma for DoG
 			int maxSpotDistance = 2;    	// maximal distance between neighboring spots

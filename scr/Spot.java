@@ -74,12 +74,30 @@ public class Spot {
 		return difference/(Math.PI);
 	}
 	
+	public double[] predictedNext(Spot spot, ArrayList<Spot> spots [], int numberOfFramesInPast) {
+		// predicts position of next spot by adding n*speed to the n-th spot in the past, then averaging over n.
+		double[] v = this.computeSpeed(spots, numberOfFramesInPast);
+		numberOfFramesInPast = Math.min(this.trace.size(), numberOfFramesInPast);
+		double xpred = this.x + v[0];
+		double ypred = this.y + v[1];
+		for (int b = 1; b <= numberOfFramesInPast; b++) {
+			int time = this.t - b;
+			int index_previous = this.trace.get(this.trace.size() - b);
+			Spot current = spots[time].get(index_previous);
+			xpred += current.x + v[0]*(b+1);
+			ypred += current.y + v[1]*(b+1);
+		}
+		double[] pred = {xpred/(numberOfFramesInPast+1), ypred/(numberOfFramesInPast+1)};
+		return pred;
+	}
+	
 	public double distanceToPredicted(Spot spot, ArrayList<Spot> spots[], int numberOfFramesInPast) {
 		if (this.trace.size() == 0) { // if spot has no trace, speed is not defined
 			return Double.NaN;
 		}
 		double [] v = this.computeSpeed(spots, numberOfFramesInPast);
-		double dist = Math.pow(this.x + v[0] - spot.x, 2) + Math.pow(this.y + v[1] - spot.y, 2);
+		double[] pred = this.predictedNext(spot, spots, numberOfFramesInPast);
+		double dist = Math.pow(pred[0] - spot.x, 2) + Math.pow(pred[1] - spot.y, 2);
 		return dist;
 	}
 	
