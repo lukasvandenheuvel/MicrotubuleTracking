@@ -1,3 +1,5 @@
+package MicrotubuleTracking.scr;
+
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -154,8 +156,8 @@ public class Track_Microtubules implements PlugIn {
 			// Draw traces as overlay
 			Overlay overlaySpots = new Overlay();
 			drawSpots(overlaySpots, spots);
-			original.setOverlay(overlayTraces);
-			original.show();
+			img.setOverlay(overlayTraces);
+			img.show();
 			makeColorBar(256, 50, "0", "2 pi");
 		
 			IJ.log("Success!");
