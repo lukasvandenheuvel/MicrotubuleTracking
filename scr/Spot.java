@@ -85,9 +85,10 @@ public class Spot {
 		double vx = 0;
 		double vy = 0;
 		Spot current = this;
-		Spot 
-		vx/= numberOfFramesInPast;
-		vy/= numberOfFramesInPast;
+		Spot last = spots[this.t - numberOfFramesInPast]
+				.get(this.trace.get(this.trace.size() - numberOfFramesInPast));
+		vx = (current.x - last.x) / numberOfFramesInPast;
+		vy = (current.y - last.y) / numberOfFramesInPast;
 		double[] v = {vx, vy};
 		return v;
 	}
