@@ -118,7 +118,7 @@ public class Track_Microtubules implements PlugIn {
 			
 			// If the spot is at the end of the trace, 
 			// and if the trace is long enough, then draw its trace.
-			drawSpots(overlayTraces, spots);
+//			drawSpots(overlayTraces, spots);
 			for (int t = 0; t < nt; t++) {
 				for (Spot spot : spots[t]) {
 					if (spot.isTraceEnd() & (spot.trace.size() > 5)){
@@ -141,8 +141,8 @@ public class Track_Microtubules implements PlugIn {
 			plotAngle.show();
 			
 			// Draw traces as overlay
-			Overlay overlaySpots = new Overlay();
-			drawSpots(overlaySpots, spots);
+//			Overlay overlaySpots = new Overlay();
+//			drawSpots(overlaySpots, spots);
 			imp.setOverlay(overlayTraces);
 			imp.show();
 //			makeColorBar(256, 50, "0", "2 pi");
