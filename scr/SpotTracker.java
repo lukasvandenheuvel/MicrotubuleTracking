@@ -14,13 +14,19 @@ public class SpotTracker {
 		// This function gets the cost for particles current and next.
 		// Note that I added a method intensityDifference to the Spot class,
 		// which calculates the difference in mean intensity between the spots current and next.
-		double dist = current.distance(next);
-		double intensityDifference = current.intensityDifference(next, imp);
-		double speedDifference = current.speedDifference(next, spots, numberOfFramesInPast);
-		double thetaDifference = current.angleDifference(next, spots, numberOfFramesInPast);
-		//return betaDist * dist/dMax + betaIntensity * intensityDifference/fMax;
-		return betaDist * dist/dMax + betaIntensity * intensityDifference/fMax 
-				+ betaSpeed * speedDifference/sMax + betaAngle * thetaDifference/tMax;
+//		double dist = current.distance(next);
+//		double intensityDifference = current.intensityDifference(next, imp);
+//		double speedDifference = current.speedDifference(next, spots, numberOfFramesInPast);
+//		double thetaDifference = current.angleDifference(next, spots, numberOfFramesInPast);
+//		//return betaDist * dist/dMax + betaIntensity * intensityDifference/fMax;
+//		if (Double.isNaN(thetaDifference)) {
+//			return (betaDist) * dist/dMax + betaIntensity * intensityDifference/fMax 
+//					+ (betaSpeed+betaAngle) * speedDifference/sMax ;
+//		}
+//		return betaDist * dist/dMax + betaIntensity * intensityDifference/fMax 
+//				+ betaSpeed * speedDifference/sMax + betaAngle * thetaDifference/tMax;
+		double distToPred = current.distanceToPredicted(next, spots, numberOfFramesInPast);
+		return distToPred;
 	}
 	
 	public double[][] getDistanceMatrix(ArrayList<Spot> spots[], int t){
@@ -48,7 +54,7 @@ public class SpotTracker {
 		// This function returns an AxB matrix, where A is the number of particles on timeframe t
 		// and B is the number of particles on timeframe t+1.
 		// C_ij is the cost function for particle i (on frame t) and particle j (on frame t+1).
-		// Note that I added a method intensityDifference to the Spot class.
+		// spots is an array of list of spots, such that spots[t] is the list of spots at time t
 		
 		int t = imp.getCurrentSlice() - 1;		
 		// Get max distance, delta_intensity, delta_speed and delta_theta (used for normalization afterwards)
@@ -58,10 +64,11 @@ public class SpotTracker {
 		double tMax = -1;
 		for (Spot current: spots[t]) {
 			for (Spot next: spots[t+1]) {
-				dMax = Math.max(dMax, current.distance(next));
-				fMax = Math.max(fMax, current.intensityDifference(next, imp));
-				sMax = Math.max(sMax, current.speedDifference(next, spots, numberOfFramesInPast));
-				tMax = Math.max(tMax, current.angleDifference(next, spots, numberOfFramesInPast));
+				dMax = Math.max(dMax, current.distanceToPredicted(next, spots, numberOfFramesInPast));
+//				fMax = Math.max(fMax, current.intensityDifference(next, imp));
+//				sMax = Math.max(sMax, current.speedDifference(next, spots, numberOfFramesInPast));
+//				double theta = current.angleDifference(next, spots, numberOfFramesInPast);
+//				tMax = Math.max(tMax, Double.isNaN(theta)?0:theta );
 			}
 		}
 		// Fill cost matrix
@@ -131,10 +138,12 @@ public class SpotTracker {
 			}
 			closestToCurrent[i] = closest;
 		}
+//		IJ.log(""+t);
 		int[] closestToNext = new int[spots[t+1].size()];
 		for (int j = 0; j < spots[t+1].size(); j++) {
 			int closest = 0;
 			for (int i = 0; i < spots[t].size(); i++) {
+//				IJ.log(""+C[i][j]);
 				if (C[i][j] <= C[closest][j]) 
 					closest = i;
 			}

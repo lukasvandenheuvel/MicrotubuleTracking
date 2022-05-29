@@ -25,13 +25,13 @@ public class Track_Microtubules implements PlugIn {
 			// Cost function parameters
 			double betaDist = 0;
 			double betaIntensity = 0;
-			double betaSpeed = 0.5; 
-			double betaAngle = 0.5;
+			double betaSpeed = 0.8; 
+			double betaAngle = 0.2;
 			// Other parameters 
 			double sigmaDOG = 5;			// sigma for DoG
-			int maxSpotDistance = 5;    	// maximal distance between neighboring spots
-			double DOGthreshold = 0.5;		// threshold of localmax after DoG filter
-			double maxSpotMovement = 15; 	// maximal movement of a spot in one timeframe
+			int maxSpotDistance = 2;    	// maximal distance between neighboring spots
+			double DOGthreshold = 0.3;	//todo set back to 3	// threshold of localmax after DoG filter
+			double maxSpotMovement = 15; //TODO: set back to 15	// maximal movement of a spot in one timeframe
 			int numberOfFramesInPast = 10; 	// number of frames in the past used to calculate speed of a spot
 			
 			// Import classes
@@ -40,14 +40,15 @@ public class Track_Microtubules implements PlugIn {
 			SpotTracker tracker = new SpotTracker();
 			
 			IJ.log("Starting the script");
-//			ImagePlus imp = IJ.getImage();
-			ImagePlus imp = IJ.openImage("/home/lucas/Documents/bioimage_informatics/miniproject/Hela_EB3.tif");
-			imp.show();
+			IJ.log("betaSpeed: "+betaSpeed+" betaAngle: "+betaAngle);
+			ImagePlus imp = IJ.getImage();
+//			ImagePlus imp = IJ.openImage("/home/lucas/Documents/bioimage_informatics/miniproject/easy.tif");
+//			imp.show();
 						
 			// Do the preprocessing (denoising + background subtraction)
 			IJ.log("Blurring ...");
 			denoiser.gaussianBlur3D(imp, sigmaX, sigmaY, sigmaT);
-	
+
 			imp = denoiser.subtractBackground(imp);
 
 			// Run difference of Gaussian
@@ -56,7 +57,6 @@ public class Track_Microtubules implements PlugIn {
 			int nt = imp.getNFrames();
 			ArrayList<Spot> spots[] = new Spots[nt];
 			for (int t = 0; t < nt; t++) {
-				IJ.log("Time "+t);
 				imp.setSlice(t + 1);
 				ImagePlus dog = detector.dog(imp, sigmaDOG);
 				// Detect spots by detecting local maxima in DoG 
@@ -83,7 +83,7 @@ public class Track_Microtubules implements PlugIn {
 			ArrayList[] speedDistribution = new ArrayList[nt]; 				// List of arraylists with speeds
 			ArrayList[] angleDistribution = new ArrayList[nt]; 				// List of arraylists with angles
 			for (int t = 0; t < nt; t++) {
-				IJ.log("Time = "+t);
+//				IJ.log("Time = "+t);
 				ArrayList<Double> lengths = new ArrayList<Double>(); // Arraylist of doubles
 				ArrayList<Double> speeds = new ArrayList<Double>(); // Arraylist of doubles
 				ArrayList<Double> angles = new ArrayList<Double>(); // Arraylist of doubles
@@ -118,6 +118,7 @@ public class Track_Microtubules implements PlugIn {
 			
 			// If the spot is at the end of the trace, 
 			// and if the trace is long enough, then draw its trace.
+			drawSpots(overlayTraces, spots);
 			for (int t = 0; t < nt; t++) {
 				for (Spot spot : spots[t]) {
 					if (spot.isTraceEnd() & (spot.trace.size() > 5)){
@@ -144,7 +145,7 @@ public class Track_Microtubules implements PlugIn {
 			drawSpots(overlaySpots, spots);
 			imp.setOverlay(overlayTraces);
 			imp.show();
-			makeColorBar(256, 50, "0", "2 pi");
+//			makeColorBar(256, 50, "0", "2 pi");
 		
 			IJ.log("Success!");
 
@@ -154,7 +155,7 @@ public class Track_Microtubules implements PlugIn {
 		int nt = spots.length;
 		for (int t = 0; t < nt; t++)
 			for (Spot spot : spots[t])
-				spot.draw(overlay);
+				spot.draw(overlay, spots);
 	}
 	
 	private void drawTrace(Overlay overlay, Spot spot, ArrayList<Spot> spots[]) {

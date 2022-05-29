@@ -1,13 +1,16 @@
 package MicrotubuleTracking.scr; // not sure what this does
 
 import java.awt.Color;
+import java.awt.Font;
 import java.util.ArrayList;
 
 import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.Line;
 import ij.gui.OvalRoi;
+import ij.gui.TextRoi;
 import ij.gui.Overlay;
+
 import ij.process.ImageProcessor;
 
 public class Spot {
@@ -60,14 +63,33 @@ public class Spot {
 	
 	public double angleDifference(Spot spot, ArrayList<Spot> spots[], int numberOfFramesInPast) {
 		// Calculate difference between the trajectory angle of the current spot and angle with the next spot.
-		// If no angle could be computed, return 0 as the angle difference.
+		// If no angle could be computed, return NaN as the angle difference.
 		double[] stats = this.trajectoryStatistics(spots, numberOfFramesInPast);
-		double difference = 0;
+		double difference = Double.NaN;
 		if (!(Double.isNaN(stats[2]))) {
 			double angle = Math.atan2(spot.y - this.y, spot.x - this.x);
 			difference = Math.abs(stats[2] - angle);
+			difference = Math.min(difference, 2*Math.PI - difference); // deal with case where difference is greater than pi
 		}
-		return difference/(2*Math.PI);
+		return difference/(Math.PI);
+	}
+	
+	public double distanceToPredicted(Spot spot, ArrayList<Spot> spots[], int numberOfFramesInPast) {
+		double [] v = this.computeSpeed(spots, numberOfFramesInPast);
+		double dist = Math.pow(this.x + v[0] - spot.x, 2) + Math.pow(this.y + v[1] - spot.y, 2);
+		return dist;
+	}
+	
+	public double[] computeSpeed( ArrayList<Spot> spots[], int numberOfFramesInPast) {
+		// return average speed of spot over numberOfFramesInPast past frames.
+		double vx = 0;
+		double vy = 0;
+		Spot current = this;
+		Spot 
+		vx/= numberOfFramesInPast;
+		vy/= numberOfFramesInPast;
+		double[] v = {vx, vy};
+		return v;
 	}
 	
 	public double[] trajectoryStatistics(ArrayList<Spot> spots[], int numberOfFramesInPast) {
@@ -76,9 +98,11 @@ public class Spot {
 		numberOfFramesInPast = Math.min((int)traceLength, numberOfFramesInPast);
 		double speed = Double.NaN;
 		double theta = Double.NaN;
- 
+		
+		//track all distances and angles
 		ArrayList<Double> distances = new ArrayList<Double>();
-		Spot current = new Spot(this.x, this.y, this.t);
+		ArrayList<Double> angles = new ArrayList<Double>();
+		Spot current = this;
 		Spot previous = null;
 		// Go back in time and trace back the spot
 		for (int b = 1; b <= numberOfFramesInPast; b++) {
@@ -86,16 +110,18 @@ public class Spot {
 			int index_previous = this.trace.get(this.trace.size() - b);
 			previous = spots[time].get(index_previous);
 			distances.add(current.distance(previous));
+			angles.add(Math.atan2(current.y - previous.y, current.x - previous.x)); //angle of segment with horizontal
 			current = previous;
 		}
 		//trajectoryLength = distances.size();
 		if (numberOfFramesInPast > 0) {
-			// The angle is measured from this particle to the particle tracked furtherst back in time 
-			theta = Math.atan2(this.y - current.y, this.x - current.x);
+			// The angle is the average of the angles over trajectory
+			theta = 0;
 			// The speed is the average of the distances
 			speed = 0;
 			for (int i = 0; i < numberOfFramesInPast; i++) {
 				speed += distances.get(i) / numberOfFramesInPast;
+				theta += angles.get(i) / numberOfFramesInPast;
 			}
 		}
 		// Save statistics
@@ -114,7 +140,7 @@ public class Spot {
 		this.color = a.color;
 	}
 
-	public void draw(Overlay overlay) {
+	public void draw(Overlay overlay, ArrayList<Spot>  spots[]) {
 		double xp = x + 0.5;
 		double yp = y + 0.5;
 		int radius = 5;
@@ -123,12 +149,20 @@ public class Spot {
 		roi.setStrokeColor(color);
 		roi.setStrokeWidth(1);
 		overlay.add(roi);
-		if (next != null) {
-			Line line = new Line(x, y, next.x, next.y);
-			line.setStrokeColor(color);
-			line.setStrokeWidth(2);
-			overlay.add(line);
-		}
+		// uncomment this part to overlay the angle next to each spot
+		Font font = new Font("SansSerif", Font.PLAIN, 6);
+		TextRoi troi = new TextRoi(xp, yp, ""+this.trajectoryStatistics(spots, 10)[2], font);
+		troi.setPosition(t+1); // display roi in one frqme
+		troi.setStrokeColor(color);
+		troi.setStrokeWidth(1);
+		overlay.add(troi);
+		
+//		if (next != null) {
+//			Line line = new Line(x, y, next.x, next.y);
+//			line.setStrokeColor(color);
+//			line.setStrokeWidth(2);
+//			overlay.add(line);
+//		}
 	}
 	
 	public void link(Spot a) {
