@@ -75,6 +75,9 @@ public class Spot {
 	}
 	
 	public double distanceToPredicted(Spot spot, ArrayList<Spot> spots[], int numberOfFramesInPast) {
+		if (this.trace.size() == 0) { // if spot has no trace, speed is not defined
+			return Double.NaN;
+		}
 		double [] v = this.computeSpeed(spots, numberOfFramesInPast);
 		double dist = Math.pow(this.x + v[0] - spot.x, 2) + Math.pow(this.y + v[1] - spot.y, 2);
 		return dist;
@@ -84,11 +87,11 @@ public class Spot {
 		// return average speed of spot over numberOfFramesInPast past frames.
 		double vx = 0;
 		double vy = 0;
-		Spot current = this;
+		numberOfFramesInPast = Math.min(this.trace.size(), numberOfFramesInPast);
 		Spot last = spots[this.t - numberOfFramesInPast]
 				.get(this.trace.get(this.trace.size() - numberOfFramesInPast));
-		vx = (current.x - last.x) / numberOfFramesInPast;
-		vy = (current.y - last.y) / numberOfFramesInPast;
+		vx = (this.x - last.x) / numberOfFramesInPast;
+		vy = (this.y - last.y) / numberOfFramesInPast;
 		double[] v = {vx, vy};
 		return v;
 	}

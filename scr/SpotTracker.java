@@ -7,26 +7,30 @@ import ij.ImagePlus;
 
 public class SpotTracker {
 	
+	public double betaDist;
+	public double betaIntensity;
+	public double betaPred; 
+	
+	public SpotTracker(double betaDist, double betaIntensity, double betaPred) {
+		this.betaDist = betaDist;
+		this.betaIntensity = betaIntensity;
+		this.betaPred = betaPred;
+	}
+	
 	public double cost(Spot current, Spot next, ArrayList<Spot> spots[], ImagePlus imp, 
-					   double dMax, double fMax, double sMax, double tMax,
-					   double betaDist, double betaIntensity, double betaSpeed, double betaAngle, int numberOfFramesInPast) {
+					   double dMax, double fMax, double pMax,
+					   int numberOfFramesInPast) {
 		// Implementation of cost function.
 		// This function gets the cost for particles current and next.
 		// Note that I added a method intensityDifference to the Spot class,
 		// which calculates the difference in mean intensity between the spots current and next.
-//		double dist = current.distance(next);
-//		double intensityDifference = current.intensityDifference(next, imp);
-//		double speedDifference = current.speedDifference(next, spots, numberOfFramesInPast);
-//		double thetaDifference = current.angleDifference(next, spots, numberOfFramesInPast);
-//		//return betaDist * dist/dMax + betaIntensity * intensityDifference/fMax;
-//		if (Double.isNaN(thetaDifference)) {
-//			return (betaDist) * dist/dMax + betaIntensity * intensityDifference/fMax 
-//					+ (betaSpeed+betaAngle) * speedDifference/sMax ;
-//		}
-//		return betaDist * dist/dMax + betaIntensity * intensityDifference/fMax 
-//				+ betaSpeed * speedDifference/sMax + betaAngle * thetaDifference/tMax;
+		double dist = current.distance(next);
 		double distToPred = current.distanceToPredicted(next, spots, numberOfFramesInPast);
-		return distToPred;
+		double intensityDiff = current.intensityDifference(next, imp);
+		if (Double.isNaN(distToPred)) { // in case velocity is not available, replace it by distance
+			return (this.betaDist+this.betaPred) * dist/dMax + this.betaIntensity * intensityDiff/fMax ;
+		}
+		return distToPred * this.betaPred/pMax + dist *this.betaDist/dMax + this.betaIntensity * intensityDiff/fMax;
 	}
 	
 	public double[][] getDistanceMatrix(ArrayList<Spot> spots[], int t){
@@ -50,7 +54,7 @@ public class SpotTracker {
 	}
 	
 	public double[][] getCostMatrix(ArrayList<Spot> spots[], ImagePlus imp,
-									double betaDist, double betaIntensity, double betaSpeed, double betaAngle, int numberOfFramesInPast){
+									int numberOfFramesInPast){
 		// This function returns an AxB matrix, where A is the number of particles on timeframe t
 		// and B is the number of particles on timeframe t+1.
 		// C_ij is the cost function for particle i (on frame t) and particle j (on frame t+1).
@@ -60,15 +64,13 @@ public class SpotTracker {
 		// Get max distance, delta_intensity, delta_speed and delta_theta (used for normalization afterwards)
 		double dMax = -1;
 		double fMax = -1;
-		double sMax = -1;
-		double tMax = -1;
+		double pMax = -1;
 		for (Spot current: spots[t]) {
 			for (Spot next: spots[t+1]) {
-				dMax = Math.max(dMax, current.distanceToPredicted(next, spots, numberOfFramesInPast));
-//				fMax = Math.max(fMax, current.intensityDifference(next, imp));
-//				sMax = Math.max(sMax, current.speedDifference(next, spots, numberOfFramesInPast));
-//				double theta = current.angleDifference(next, spots, numberOfFramesInPast);
-//				tMax = Math.max(tMax, Double.isNaN(theta)?0:theta );
+				dMax = Math.max(dMax, current.distance(next));
+				fMax = Math.max(fMax, current.intensityDifference(next, imp));
+				double p = current.distanceToPredicted(next, spots, numberOfFramesInPast);
+				pMax = Math.max(p, Double.isNaN(p)?-1:p ); // if speed is not defined, just skip
 			}
 		}
 		// Fill cost matrix
@@ -77,8 +79,9 @@ public class SpotTracker {
 			Spot current = spots[t].get(i);
 			for (int j = 0; j < spots[t+1].size(); j++) {
 				Spot next = spots[t+1].get(j);
-				C[i][j] = cost(current, next, spots, imp, dMax, fMax, sMax, tMax, 
-							   betaDist, betaIntensity, betaSpeed, betaAngle, numberOfFramesInPast);
+				C[i][j] = cost(current, next, spots, imp, 
+						dMax, fMax, pMax,  
+					   numberOfFramesInPast);
 			}
 		}
 		return C;

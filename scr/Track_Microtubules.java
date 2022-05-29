@@ -23,10 +23,9 @@ public class Track_Microtubules implements PlugIn {
 			double sigmaY = 1;				// smoothing sigma in Y
 			double sigmaT = 2;				// smoothing sigma in time
 			// Cost function parameters
-			double betaDist = 0;
+			double betaDist = 0.2;
 			double betaIntensity = 0;
-			double betaSpeed = 0.8; 
-			double betaAngle = 0.2;
+			double betaPredict = 0.8; 
 			// Other parameters 
 			double sigmaDOG = 5;			// sigma for DoG
 			int maxSpotDistance = 2;    	// maximal distance between neighboring spots
@@ -37,13 +36,13 @@ public class Track_Microtubules implements PlugIn {
 			// Import classes
 			Denoiser denoiser = new Denoiser();
 			SpotDetector detector = new SpotDetector();
-			SpotTracker tracker = new SpotTracker();
+			SpotTracker tracker = new SpotTracker(betaDist, betaIntensity, betaPredict);
 			
 			IJ.log("Starting the script");
-			IJ.log("betaSpeed: "+betaSpeed+" betaAngle: "+betaAngle);
-			ImagePlus imp = IJ.getImage();
-//			ImagePlus imp = IJ.openImage("/home/lucas/Documents/bioimage_informatics/miniproject/easy.tif");
-//			imp.show();
+			IJ.log("betaPred: "+betaPredict+" betaDist: "+betaDist);
+//			ImagePlus imp = IJ.getImage();
+			ImagePlus imp = IJ.openImage("/home/lucas/Documents/bioimage_informatics/miniproject/easy.tif");
+			imp.show();
 						
 			// Do the preprocessing (denoising + background subtraction)
 			IJ.log("Blurring ...");
@@ -71,7 +70,7 @@ public class Track_Microtubules implements PlugIn {
 			for (int t = 0; t < nt - 1; t++) {
 				imp.setSlice(t+1);
 				double[][] C = tracker.getCostMatrix(spots, imp,
-													 betaDist, betaIntensity, betaSpeed, betaAngle, numberOfFramesInPast);
+													 numberOfFramesInPast);
 				tracker.nearestNeighbourLinking(C, spots, t, maxSpotMovement);
 				
 			}
