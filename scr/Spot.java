@@ -87,11 +87,11 @@ public class Spot {
 		// return average speed of spot over numberOfFramesInPast past frames.
 		double vx = 0;
 		double vy = 0;
-		numberOfFramesInPast = Math.min(this.trace.size(), numberOfFramesInPast);
+		numberOfFramesInPast =  Math.min(this.trace.size(), numberOfFramesInPast);
 		Spot last = spots[this.t - numberOfFramesInPast]
 				.get(this.trace.get(this.trace.size() - numberOfFramesInPast));
-		vx = (this.x - last.x) / numberOfFramesInPast;
-		vy = (this.y - last.y) / numberOfFramesInPast;
+		vx = (this.x - last.x) / (double) numberOfFramesInPast;
+		vy = (this.y - last.y) / (double) numberOfFramesInPast;
 		double[] v = {vx, vy};
 		return v;
 	}
@@ -155,7 +155,13 @@ public class Spot {
 		overlay.add(roi);
 		// uncomment this part to overlay the angle next to each spot
 		Font font = new Font("SansSerif", Font.PLAIN, 6);
-		TextRoi troi = new TextRoi(xp, yp, ""+this.trajectoryStatistics(spots, 10)[2], font);
+		double d = -1;
+		if (this.trace.size() > 0){
+			d = this.distanceToPredicted(
+					spots[this.t-1].get(this.trace.get(this.trace.size()-1)),
+					spots, 10);
+		}
+		TextRoi troi = new TextRoi(xp, yp, ""+ d, font);
 		troi.setPosition(t+1); // display roi in one frqme
 		troi.setStrokeColor(color);
 		troi.setStrokeWidth(1);

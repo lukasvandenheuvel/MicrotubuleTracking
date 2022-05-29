@@ -70,7 +70,7 @@ public class SpotTracker {
 				dMax = Math.max(dMax, current.distance(next));
 				fMax = Math.max(fMax, current.intensityDifference(next, imp));
 				double p = current.distanceToPredicted(next, spots, numberOfFramesInPast);
-				pMax = Math.max(p, Double.isNaN(p)?-1:p ); // if speed is not defined, just skip
+				pMax = Math.max(pMax, Double.isNaN(p)?-1:p ); // if speed is not defined, just skip
 			}
 		}
 		// Fill cost matrix

@@ -23,13 +23,13 @@ public class Track_Microtubules implements PlugIn {
 			double sigmaY = 1;				// smoothing sigma in Y
 			double sigmaT = 2;				// smoothing sigma in time
 			// Cost function parameters
-			double betaDist = 0.2;
+			double betaDist = 0.5;
 			double betaIntensity = 0;
-			double betaPredict = 0.8; 
+			double betaPredict = 0.5; 
 			// Other parameters 
 			double sigmaDOG = 5;			// sigma for DoG
 			int maxSpotDistance = 2;    	// maximal distance between neighboring spots
-			double DOGthreshold = 0.3;	//todo set back to 3	// threshold of localmax after DoG filter
+			double DOGthreshold = 0.3;	//todo set back to 0.3	// threshold of localmax after DoG filter
 			double maxSpotMovement = 15; //TODO: set back to 15	// maximal movement of a spot in one timeframe
 			int numberOfFramesInPast = 10; 	// number of frames in the past used to calculate speed of a spot
 			
@@ -40,9 +40,10 @@ public class Track_Microtubules implements PlugIn {
 			
 			IJ.log("Starting the script");
 			IJ.log("betaPred: "+betaPredict+" betaDist: "+betaDist);
-//			ImagePlus imp = IJ.getImage();
-			ImagePlus imp = IJ.openImage("/home/lucas/Documents/bioimage_informatics/miniproject/easy.tif");
-			imp.show();
+			ImagePlus imp = IJ.getImage();
+//			ImagePlus imp = IJ.openImage("/home/lucas/Documents/bioimage_informatics/miniproject/easy.tif");
+//			imp.show();
+			IJ.run(imp, "Enhance Contrast", "saturated=0.35");
 						
 			// Do the preprocessing (denoising + background subtraction)
 			IJ.log("Blurring ...");
