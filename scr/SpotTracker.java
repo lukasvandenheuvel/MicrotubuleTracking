@@ -1,4 +1,4 @@
-package MicrotubuleTracking.scr; // not sure what this does
+package MicrotubuleTracking.scr;
 
 import java.util.ArrayList;
 
@@ -31,6 +31,7 @@ public class SpotTracker {
 			return (this.betaDist+this.betaPred) * dist/dMax + this.betaIntensity * intensityDiff/fMax ;
 		}
 		return distToPred * this.betaPred/pMax + dist *this.betaDist/dMax + this.betaIntensity * intensityDiff/fMax;
+
 	}
 	
 	public double[][] getDistanceMatrix(ArrayList<Spot> spots[], int t){

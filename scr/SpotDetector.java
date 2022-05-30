@@ -1,4 +1,4 @@
-package MicrotubuleTracking.scr; // not sure what this does
+package MicrotubuleTracking.scr;
 
 import java.util.ArrayList;
 
@@ -25,7 +25,7 @@ public class SpotDetector {
 	
 	public Spots localMax(ImagePlus dog, int nbh_size, double threshold, int t) {
 		// Find local maxima. Pixel values of maxima must be larger than threshold,
-		// and maxima must be maxima on a neighborhood of size nbh_size
+		// and maxima cannot be further than nbh_size away from each other.
 		int nx = dog.getWidth();
 		int ny = dog.getHeight();
 		Spots spots = new Spots();

@@ -1,4 +1,4 @@
-package MicrotubuleTracking.scr; // not sure what this does
+package MicrotubuleTracking.scr;
 
 import java.awt.Color;
 import java.awt.Font;
