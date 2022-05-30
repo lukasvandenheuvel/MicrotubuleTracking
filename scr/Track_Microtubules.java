@@ -145,7 +145,7 @@ public class Track_Microtubules implements PlugIn {
 //			drawSpots(overlaySpots, spots);
 			imp.setOverlay(overlayTraces);
 			imp.show();
-//			makeColorBar(256, 50, "0", "2 pi");
+			makeColorBar(256, 50, "0", "2 pi");
 		
 			IJ.log("Success!");
 
@@ -213,5 +213,6 @@ public class Track_Microtubules implements PlugIn {
 		ip.setJustification(ImageProcessor.RIGHT_JUSTIFY);
 		ip.drawString(endValue+" -", width, (int)height/2 + 7);
 		colorbar.show();
+		colorbar.changes = false;
 	}
 }
