@@ -26,7 +26,7 @@ public class SetupDetectionDialog implements ActionListener {
 		
 		gd.addMessage("Spot detection parameters:");
         gd.addNumericField("DOG sigma", 3);
-        gd.addNumericField("DOG threshold", 1);
+        gd.addNumericField("DOG threshold", 0.4);
         gd.addNumericField("Maximal distance between neigbouring spots", 5);
         // Add listener to button and add button to GenericDialog
      	previewBtn.addActionListener(this);
@@ -37,10 +37,9 @@ public class SetupDetectionDialog implements ActionListener {
         gd.addNumericField("Maximal number of frames in past considered for speed calculation", 10);
         
         gd.addMessage("Cost function parameters (must sum up to 1):");
-        gd.addNumericField("Distance cost", 0.25);
-        gd.addNumericField("Intensity cost", 0.25);
-        gd.addNumericField("Speed cost", 0.25);
-        gd.addNumericField("Angle cost", 0.25);
+        gd.addNumericField("Distance cost", 0.1);
+        gd.addNumericField("Intensity cost", 0.1);
+        gd.addNumericField("Distance to predicted cost", 0.8);
         
         gd.showDialog();
         
