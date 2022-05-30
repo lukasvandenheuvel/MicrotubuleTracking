@@ -162,7 +162,7 @@ public class Spot {
 		this.color = a.color;
 	}
 
-	public void draw(Overlay overlay, ArrayList<Spot>  spots[]) {
+	public void draw(Overlay overlay) {
 		double xp = x + 0.5;
 		double yp = y + 0.5;
 		int radius = 5;
@@ -171,20 +171,8 @@ public class Spot {
 		roi.setStrokeColor(color);
 		roi.setStrokeWidth(1);
 		overlay.add(roi);
-		// uncomment this part to overlay the angle next to each spot
-		Font font = new Font("SansSerif", Font.PLAIN, 6);
-		double d = -1;
-		if (this.trace.size() > 0){
-			d = this.distanceToPredicted(
-					spots[this.t-1].get(this.trace.get(this.trace.size()-1)),
-					spots, 10);
-		}
-		TextRoi troi = new TextRoi(xp, yp, ""+ d, font);
-		troi.setPosition(t+1); // display roi in one frqme
-		troi.setStrokeColor(color);
-		troi.setStrokeWidth(1);
-		overlay.add(troi);
-		
+		// uncomment next part to also draw the line between this spot and the next
+		// this is usually taking care of by drawTraces
 //		if (next != null) {
 //			Line line = new Line(x, y, next.x, next.y);
 //			line.setStrokeColor(color);

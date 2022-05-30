@@ -172,7 +172,7 @@ public class Track_Microtubules implements PlugIn {
 		int nt = spots.length;
 		for (int t = 0; t < nt; t++)
 			for (Spot spot : spots[t])
-				spot.draw(overlay, spots);
+				spot.draw(overlay);
 	}
 	
 	private void drawTrace(Overlay overlay, Spot spot, ArrayList<Spot> spots[]) {
