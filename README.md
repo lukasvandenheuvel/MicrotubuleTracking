@@ -11,15 +11,18 @@ It also display scatterplots of the speeds and angles of the microtubules as a f
 
 ## Contents
 
-This .zip archive contains the compiled .jar file containing ImageJ and the MicrotubuleTracker.
+This .zip archive contains the compiled Track_Microtubules.jar file containing ImageJ and the MicrotubuleTracker.
 It also contains the source code in ```src/```.
 Finally, the ```slides.pdf``` document contains slides presenting the project in more detail.
 
 ## Usage
 
-Open an image with ImageJ and select "Plugins > Tracker".
-Choose the denoising parameters on the GUI, then when the image is denoised, choose the tracking parameters.
-Default parameters are already in place.
+- Copy the Track_Microtubules.jar in the Fiji Plugins folder.
+- Restart Fiji.
+- Open a timelapse with ImageJ and select "Plugins > Track Microtubules".
+- Choose the denoising parameters on the GUI (see below). Click ```preview``` to see changes.
+- When the image is denoised, choose the detection and tracking parameters. Click ```preview``` to see the detection.
+- Default parameters are already in place.
 
 Output : four images, containing the denoised image with the trajectories overlaid, a colorbar for the trajectories, the angle scatterplot, and the speed scatterplot.
 
