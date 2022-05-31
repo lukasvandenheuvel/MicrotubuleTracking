@@ -1,6 +1,7 @@
 # MicrotubuleTracking  
   
-Bioimage informatics (BIO-410) Miniproject
+Bioimage informatics (BIO-410) Miniproject.
+
 Authors : [Brodier Mariane](mailto:mariane.brodier@epfl.ch) , [Guirardel Lucas](mailto:lucas.guirardel@epfl.ch), [van den Heuvel Lukas](mailto:cornelius.vandenheuvel@epfl.ch).
 
 [Github link](github.com/lukasvandenheuvel/MicrotubuleTracking)
@@ -19,6 +20,8 @@ Finally, the ```slides.pdf``` document contains slides presenting the project in
 Open an image with ImageJ and select "Plugins > Tracker".
 Choose the denoising parameters on the GUI, then when the image is denoised, choose the tracking parameters.
 Default parameters are already in place.
+
+Output : four IJ windows, containing the denoised image with the trajectories overlaid, a colorbar for the trajectories, the angle scatterplot, and the speed scatterplot.
 
 ### Parameters
 
