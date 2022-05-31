@@ -1,5 +1,3 @@
-package MicrotubuleTracking.scr;
-
 import java.awt.TextField;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -18,9 +16,9 @@ public class SetupDetectionDialog implements ActionListener {
 	ImagePlus crop;
 	JButton previewBtn = new JButton("Preview");
 	GenericDialog  gd = new GenericDialog("Enter spot detection parameters");
-	String colorby = "angle";
 	
 	public GenericDialog showDialog( ImagePlus imp )
+	// Start up a generic dialog which allows the user to choose the detection parameters.
 	{
 		// Initiate a 'crop' ImagePlus (one timeframe) 
 		crop = new ImagePlus();
@@ -29,24 +27,28 @@ public class SetupDetectionDialog implements ActionListener {
         gd.addNumericField("DOG sigma", 3);
         gd.addNumericField("DOG threshold", 0.4);
         gd.addNumericField("Maximal distance between neigbouring spots", 5);
+        
         // Add listener to button and add button to GenericDialog
      	previewBtn.addActionListener(this);
      	previewBtn.setActionCommand("PREVIEW");
         gd.add(previewBtn);
         
-        // color by speed or by angle
-
-        String[] choices = {"angle","speed"};
-        gd.addRadioButtonGroup("Color by :", choices, 2,0, "angle");
-        
         gd.addMessage("Spot tracking parameters:");
         gd.addNumericField("Maximal spot movement (in one timestep)", 15);
         gd.addNumericField("Maximal number of frames in past considered for speed calculation", 10);
         
-        gd.addMessage("Cost function parameters :");
+        gd.addMessage("Cost function parameters:");
         gd.addNumericField("Distance cost", 0.1);
         gd.addNumericField("Intensity cost", 0.1);
         gd.addNumericField("Distance to predicted cost", 0.8);
+        
+        // color by speed or by angle
+        gd.addMessage("How do you want to plot traces?");
+        String[] colorChoices = {"angle","speed","trace length","random","constant"};
+        gd.addChoice("Hue :", colorChoices, "angle");
+        gd.addChoice("Saturation :", colorChoices, "constant");
+        gd.addChoice("Brightness :", colorChoices, "constant");
+        gd.addNumericField("Minimal trace length for plotting", 10);
         
         gd.showDialog();
         
@@ -65,12 +67,6 @@ public class SetupDetectionDialog implements ActionListener {
 	public void actionPerformed(ActionEvent e) {
 		if (e.getActionCommand() == "PREVIEW"){
 				this.preview();
-		}
-		else if (e.getActionCommand() == "SWITCH_COLOR_ANGLE"){
-			this.colorby = "angle";
-		}
-		else if (e.getActionCommand() == "SWITCH_COLOR_SPEED"){
-			this.colorby = "speed";
 		}
 	}
 	

@@ -1,5 +1,3 @@
-package MicrotubuleTracking.scr;
-
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -18,7 +16,7 @@ public class Track_Microtubules implements PlugIn {
 	
 	public void run(String arg) {
 		
-			// Import classes
+			// Import classes for denoising and detection
 			Denoiser denoiser = new Denoiser();
 			SpotDetector detector = new SpotDetector();
 		
@@ -64,17 +62,21 @@ public class Track_Microtubules implements PlugIn {
 			double betaIntensity = gd_detection.getNextNumber();
 			double betaPredict = gd_detection.getNextNumber(); 
 			
+			// Normalize the cost function parameters so they sum up to 1
 			double totalWeight = betaDist + betaIntensity + betaPredict;
-			
 			SpotTracker tracker = new SpotTracker(betaDist/totalWeight, betaIntensity/totalWeight, betaPredict/totalWeight);
 			
-			String color_by = gd_detection.getNextRadioButton();
+			// Get plot coloring paramters
+			String hueBy = gd_detection.getNextChoice();
+			String SatBy = gd_detection.getNextChoice();
+			String BrightBy = gd_detection.getNextChoice();
+			String[] HSB_coloring = {hueBy, SatBy, BrightBy};
+			int minimalTraceLengthOnPlot = (int)gd_detection.getNextNumber();
 			
-			IJ.log("Coloring by "+ color_by);
-						
+									
 			// Run difference of Gaussian
 			// To save memory, we do this on each slice seperately
-			IJ.log("Running DoG ...");
+			IJ.log("Detect spots with DoG ...");
 			int nt = img.getNFrames();
 			ArrayList<Spot> spots[] = new Spots[nt];
 			for (int t = 0; t < nt; t++) {
@@ -86,7 +88,7 @@ public class Track_Microtubules implements PlugIn {
 			}
 									
 			// Link spots
-			IJ.log("Linking spots ...");
+			IJ.log("Linking spots with Nearest Neighbor Linking ...");
 			for (int t = 0; t < nt - 1; t++) {
 				img.setSlice(t+1);
 				double[][] C = tracker.getCostMatrix(spots, img,
@@ -125,47 +127,78 @@ public class Track_Microtubules implements PlugIn {
 			double[] xArray = new double[numResults];
 			
 			int count = 0;
+			double maxSpeed = -1;  // keep track of max speed, will be useful for drawing the traces
+			double maxLength = -1; // keep track of max trace lentgh, will be useful for drawing the traces
 			for (int t = 0; t < nt; t++) {
 				for (int i = 0; i < speedDistribution[t].size(); i++) {
 					resultsLength[count] = (double)trajectoryLengthDistribution[t].get(i);
 					resultsSpeed[count] = (double)speedDistribution[t].get(i);
 					resultsAngle[count] = (double)angleDistribution[t].get(i);
+					maxLength = Math.max(maxLength, resultsLength[count]);
+					if (!(Double.isNaN(resultsSpeed[count])))
+						maxSpeed = Math.max(maxSpeed, resultsSpeed[count]);
 					xArray[count] = t + 1;
 					count += 1;
 				}
 			}
 			
 			// If the spot is at the end of the trace, 
-			// and if the trace is longer than 5 frames, then draw its trace.
+			// and if the trace is long enough, then draw its trace.
+			int numFinalTraces = 0;
 			for (int t = 0; t < nt; t++) {
 				for (Spot spot : spots[t]) {
-					if (spot.isTraceEnd() & (spot.trace.size() > 5)){
-						drawTrace(overlayTraces, spot, spots);
+					if (spot.isTraceEnd() & (spot.trace.size() > minimalTraceLengthOnPlot)){
+						drawTrace(overlayTraces, spot, spots, numberOfFramesInPast, HSB_coloring, maxSpeed, maxLength);
+						numFinalTraces++;
+						
 					}
 				}
 			}
 			
+			// Calculate the statistics of the final traces
+			double[] finalSpeeds = new double[numFinalTraces];
+			double[] finalLengths = new double[numFinalTraces];
+			double[] finalAngles = new double[numFinalTraces];
+			count = 0;
+			for (int t = 0; t < nt; t++) {
+				for (Spot spot : spots[t]) {
+					if (spot.isTraceEnd() & (spot.trace.size() > minimalTraceLengthOnPlot)){
+						double[] stats = spot.trajectoryStatistics(spots, numberOfFramesInPast);
+						finalLengths[count] = stats[0];
+						finalSpeeds[count] = stats[1];
+						finalAngles[count] = stats[2];
+						count++;
+					}
+				}
+			}
+			 			
 			// Add results to plots
 			Plot plotLength = new Plot("Results traces", "Frame", "Trajectory lengts");
 			plotLength.add("circle", xArray, resultsLength);
 			plotLength.show();
 			
-			Plot plotSpeed = new Plot("Results", "Frame", "Speed");
+			Plot plotSpeed = new Plot("Results speed", "Frame", "Speed");
 			plotSpeed.add("circle", xArray, resultsSpeed);
 			plotSpeed.show();
 			
-			Plot plotAngle = new Plot("Results", "Frame", "Angle");
+			Plot plotAngle = new Plot("Results angle", "Frame", "Angle");
 			plotAngle.add("circle", xArray, resultsAngle);
 			plotAngle.show();
 			
 			// Draw traces as overlay
-
 			Overlay overlaySpots = new Overlay();
 			drawSpots(overlaySpots, spots);
 			img.setOverlay(overlayTraces);
 			img.show();
-			makeColorBar(256, 50, "0", "2 pi");
-		
+			
+			// Make color bar
+			if (hueBy.equals("angle")) {
+				makeColorBar("Color bar angle", 256, 50, "0", "2 pi");
+			}else if (hueBy.equals("speed")) {
+				makeColorBar("Color bar speed", 256, 50, "0", String.format("%.1f", maxSpeed));
+			}else if (hueBy.equals("trace length")) {
+				makeColorBar("Color bar trace length", 256, 50, "0", String.format("%.1f", maxLength));
+			}
 			IJ.log("Success!");
 
 	}
@@ -177,14 +210,26 @@ public class Track_Microtubules implements PlugIn {
 				spot.draw(overlay);
 	}
 	
-	private void drawTrace(Overlay overlay, Spot spot, ArrayList<Spot> spots[]) {
+	private void drawTrace(Overlay overlay, Spot spot, ArrayList<Spot> spots[], int numberOfFramesInPast, String[] HSB_coloring, double maxSpeed, double maxLength) {
 		
-		// Use angle as color;
-		int startTime = spot.t - spot.trace.size(); // timepoint where the trace started
-		Spot first = spots[startTime].get(spot.trace.get(0));
-		double angle = Math.atan2(spot.y - first.y, spot.x - first.x);
-		double rescaledAngle = (angle + Math.PI) / Math.PI;
-		Color color = Color.getHSBColor((float)rescaledAngle, 1f, 1f);
+		double[] stats = spot.trajectoryStatistics(spots, numberOfFramesInPast);
+		
+		// Fill HSB_values with 3 numbers between 0 and 1 (hue, saturation, brightness)
+		double[] HSB_values = new double[3]; 
+		for (int i=0; i<3; i++) {
+			if (HSB_coloring[i].equals("angle")) {
+				HSB_values[i] = (stats[2] + Math.PI) / Math.PI;
+			}else if (HSB_coloring[i].equals("speed")) {
+				HSB_values[i] = stats[1] / maxSpeed;
+			}else if (HSB_coloring[i].equals("trace length")) {
+				HSB_values[i] = stats[0] / maxLength;
+			}else if (HSB_coloring[i].equals("random")) {
+				HSB_values[i] = Math.random();
+			}else {
+				HSB_values[i] = 1;
+			}
+		}
+		Color color = Color.getHSBColor((float)HSB_values[0], (float)HSB_values[1], (float)HSB_values[2]);
 		color = new Color(color.getRed(), color.getGreen(), color.getBlue(), 120);
 		
 		// Trace back this trace and draw a line
@@ -199,9 +244,9 @@ public class Track_Microtubules implements PlugIn {
 		}
 	}
 	
-	private void makeColorBar(int width, int height, String startValue, String endValue) {
+	private void makeColorBar(String title, int width, int height, String startValue, String endValue) {
 		// Create HSB colorbar.
-		ImagePlus colorbar = IJ.createImage("Color bar", "RGB", width, height, 1);
+		ImagePlus colorbar = IJ.createImage(title, "RGB", width, height, 1);
 		colorbar = new CompositeImage(colorbar, IJ.COMPOSITE);
 		ImageProcessor ipRed = colorbar.getChannelProcessor();
 		ImageProcessor ipGreen = colorbar.getChannelProcessor();
