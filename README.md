@@ -27,13 +27,13 @@ Output : four images, containing the denoised image with the trajectories overla
 
 #### Denoising parameters
 
-- SigmaXY : $\sigma$ of spatial Gaussian blur
-- SigmaT : $\sigma$ of temporal Gaussian blur
+- SigmaXY : spatial Gaussian blur $\sigma$
+- SigmaT : temporal Gaussian blur $\sigma$
 
 #### Spot detection parameters
 
-- DOG sigma (pixels) : $\sigma$ of Difference of Gaussian filter for spot detection
-- DOG threshold  (pixels) : minimum intensity value to detect spots
+- DOG sigma (pixels) : Difference of Gaussian filter for spot detection $\sigma_1$ ($\sigma_2 = \sqrt{2} \sigma_1$)
+- DOG threshold  (pixels) : minimum intensity value to detect spots.
 - Maximal distance between neighbouring spots  (pixels) : prevent spots closer than this distance to appear.
 
 #### Spot tracking parameters
@@ -45,9 +45,9 @@ Output : four images, containing the denoised image with the trajectories overla
 
 Weights given to different components of the cost function.
 
-- Distance cost : weight of the distance between current and next spot
-- Intensity cost : weight of the difference in intensity between current and next spot
-- Distance to predicted cost : weight of the distance between predicted and actual next spot
+- Distance cost : weight of the distance between current and next spot.
+- Intensity cost : weight of the difference in intensity between current and next spot.
+- Distance to predicted cost : weight of the distance between predicted and actual next spot.
 
 ## Code structure
 
