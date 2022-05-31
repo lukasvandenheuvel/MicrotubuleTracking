@@ -1,5 +1,3 @@
-package MicrotubuleTracking.scr;
-
 import java.util.ArrayList;
 
 import ij.IJ;

@@ -1,18 +1,10 @@
-package MicrotubuleTracking.scr;
-
 import ij.ImagePlus;
-import ij.gui.DialogListener;
 import ij.gui.GenericDialog;
-import ij.gui.Overlay;
 import ij.IJ;
 
-import java.util.ArrayList;
 import java.util.Vector;
-import java.util.concurrent.TimeUnit;
-
 import javax.swing.JButton;
 
-import java.awt.AWTEvent;
 import java.awt.TextField;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -24,6 +16,7 @@ public class SetupDenoisingDialog implements ActionListener {
 	GenericDialog  gd = new GenericDialog("Enter denoising parameters");
 		
 	public GenericDialog showDialog( ImagePlus imp )
+	// Start up a generic dialog which allows the user to choose the denoising parameters.
 	{
 		// Initiate a 'crop' ImagePlus (one timeframe) 
 		crop = new ImagePlus();

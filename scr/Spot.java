@@ -1,4 +1,4 @@
-package MicrotubuleTracking.scr;
+//package MicrotubuleTracking.scr;
 
 import java.awt.Color;
 import java.awt.Font;
@@ -92,7 +92,7 @@ public class Spot {
 	}
 	
 	public double distanceToPredicted(Spot spot, ArrayList<Spot> spots[], int numberOfFramesInPast) {
-		if (this.trace.size() == 0) { // if spot has no trace, speed is not defined
+		if (this.trace.size() <= 1) { // if spot has no trace longer than 1, speed is not defined
 			return Double.NaN;
 		}
 		double [] v = this.computeSpeed(spots, numberOfFramesInPast);
@@ -120,6 +120,10 @@ public class Spot {
 		numberOfFramesInPast = Math.min((int)traceLength, numberOfFramesInPast);
 		double speed = Double.NaN;
 		double theta = Double.NaN;
+		if (traceLength <= 1) { // if spot has no trace longer than 1, statistics are not defined
+			double[] results = {traceLength, speed, theta};
+			return results;
+		}
 		
 		//track all distances and angles
 		ArrayList<Double> distances = new ArrayList<Double>();
@@ -135,22 +139,17 @@ public class Spot {
 			angles.add(Math.atan2(current.y - previous.y, current.x - previous.x)); //angle of segment with horizontal
 			current = previous;
 		}
-		//trajectoryLength = distances.size();
-		if (numberOfFramesInPast > 0) {
-			// The angle is the average of the angles over trajectory
-			theta = 0;
-			// The speed is the average of the distances
-			speed = 0;
-			for (int i = 0; i < numberOfFramesInPast; i++) {
-				speed += distances.get(i) / numberOfFramesInPast;
-				theta += angles.get(i) / numberOfFramesInPast;
-			}
+		// The speed is the average of the distances
+		speed = 0;
+		for (int i = 0; i < numberOfFramesInPast; i++) {
+			speed += distances.get(i) / numberOfFramesInPast;
+			//theta += angles.get(i) / numberOfFramesInPast;
 		}
+		// The angle is the difference between the first and the last spot
+		theta = Math.atan2(this.y - previous.y, this.x - previous.x);
+		
 		// Save statistics
-		double[] results = new double[3];
-		results[0] = traceLength;
-		results[1] = speed;
-		results[2] = theta;
+		double[] results = {traceLength, speed, theta};
 		return results;
 	}
 	

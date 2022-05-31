@@ -1,8 +1,4 @@
-package MicrotubuleTracking.scr;
-
 import java.util.ArrayList;
-
-import ij.IJ;
 import ij.ImagePlus;
 
 public class SpotTracker {
@@ -127,10 +123,6 @@ public class SpotTracker {
 		// 
 		// Then, we link A_i to B_j if (A_i, B_j) exists in closestToCurrent AND if (B_j, A_i) exists in closestToNext.
 		// 		example: link(A0,B0) and link(A2,B1).
-		//
-		// For the BONUS question, we give spots the same color if an edge between them exists in closestToNext but NOT in closestToCurrent,
-		// which means that a divided (daughter) spot must have its mother as the closest spot, but the mother must have another spot closer to it.
-		// Also, the distance between mother and daughter spots can be at most 30 pixels.
 		// ------
 		
 		int[] closestToCurrent = new int[spots[t].size()];
@@ -142,12 +134,10 @@ public class SpotTracker {
 			}
 			closestToCurrent[i] = closest;
 		}
-//		IJ.log(""+t);
 		int[] closestToNext = new int[spots[t+1].size()];
 		for (int j = 0; j < spots[t+1].size(); j++) {
 			int closest = 0;
 			for (int i = 0; i < spots[t].size(); i++) {
-//				IJ.log(""+C[i][j]);
 				if (C[i][j] <= C[closest][j]) 
 					closest = i;
 			}

@@ -1,9 +1,3 @@
-package MicrotubuleTracking.scr;
-
-import java.awt.Color;
-import java.util.ArrayList;
-import java.util.Iterator;
-
 import ij.IJ;
 import ij.ImagePlus;
 import ij.plugin.ImageCalculator;
