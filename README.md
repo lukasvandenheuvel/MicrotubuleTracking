@@ -21,7 +21,7 @@ Open an image with ImageJ and select "Plugins > Tracker".
 Choose the denoising parameters on the GUI, then when the image is denoised, choose the tracking parameters.
 Default parameters are already in place.
 
-Output : four IJ windows, containing the denoised image with the trajectories overlaid, a colorbar for the trajectories, the angle scatterplot, and the speed scatterplot.
+Output : four images, containing the denoised image with the trajectories overlaid, a colorbar for the trajectories, the angle scatterplot, and the speed scatterplot.
 
 ### Parameters
 
