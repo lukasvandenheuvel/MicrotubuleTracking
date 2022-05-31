@@ -64,7 +64,9 @@ public class Track_Microtubules implements PlugIn {
 			double betaIntensity = gd_detection.getNextNumber();
 			double betaPredict = gd_detection.getNextNumber(); 
 			
-			SpotTracker tracker = new SpotTracker(betaDist, betaIntensity, betaPredict);
+			double totalWeight = betaDist + betaIntensity + betaPredict;
+			
+			SpotTracker tracker = new SpotTracker(betaDist/totalWeight, betaIntensity/totalWeight, betaPredict/totalWeight);
 
 						
 			// Run difference of Gaussian

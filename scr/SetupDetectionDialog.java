@@ -36,7 +36,7 @@ public class SetupDetectionDialog implements ActionListener {
         gd.addNumericField("Maximal spot movement (in one timestep)", 15);
         gd.addNumericField("Maximal number of frames in past considered for speed calculation", 10);
         
-        gd.addMessage("Cost function parameters (must sum up to 1):");
+        gd.addMessage("Cost function parameters :");
         gd.addNumericField("Distance cost", 0.1);
         gd.addNumericField("Intensity cost", 0.1);
         gd.addNumericField("Distance to predicted cost", 0.8);
