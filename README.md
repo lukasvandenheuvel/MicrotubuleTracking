@@ -52,6 +52,11 @@ Weights given to different components of the cost function.
 - Intensity cost : weight of the difference in intensity between current and next spot.
 - Distance to predicted cost : weight of the distance between predicted and actual next spot.
 
+#### How do you want to plot traces?
+
+- You can give properties to the Hue, Saturation and Brightness of the traces in the output plot.
+- Minimal trace length for plotting: traces with a length smaller than this number will not be plotted.
+
 ## Code structure
 
 ### Main Plugin script
