@@ -18,6 +18,7 @@ public class SetupDetectionDialog implements ActionListener {
 	ImagePlus crop;
 	JButton previewBtn = new JButton("Preview");
 	GenericDialog  gd = new GenericDialog("Enter spot detection parameters");
+	String colorby = "angle";
 	
 	public GenericDialog showDialog( ImagePlus imp )
 	{
@@ -30,7 +31,13 @@ public class SetupDetectionDialog implements ActionListener {
         gd.addNumericField("Maximal distance between neigbouring spots", 5);
         // Add listener to button and add button to GenericDialog
      	previewBtn.addActionListener(this);
+     	previewBtn.setActionCommand("PREVIEW");
         gd.add(previewBtn);
+        
+        // color by speed or by angle
+
+        String[] choices = {"angle","speed"};
+        gd.addRadioButtonGroup("Color by :", choices, 2,0, "angle");
         
         gd.addMessage("Spot tracking parameters:");
         gd.addNumericField("Maximal spot movement (in one timestep)", 15);
@@ -56,7 +63,20 @@ public class SetupDetectionDialog implements ActionListener {
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
+		if (e.getActionCommand() == "PREVIEW"){
+				this.preview();
+		}
+		else if (e.getActionCommand() == "SWITCH_COLOR_ANGLE"){
+			this.colorby = "angle";
+		}
+		else if (e.getActionCommand() == "SWITCH_COLOR_SPEED"){
+			this.colorby = "speed";
+		}
+	}
+	
 		
+	public void preview()
+	{		
 		// Close the previous crop
 		crop.changes = false; // this avoids "Save changes?" message
 		crop.close();

@@ -46,7 +46,7 @@ public class Track_Microtubules implements PlugIn {
 			img.show();
 			
 			// GUI 2: Spot detection GUI
-			GenericDialog gd_detection = new SetupDetectionDialog().showDialog(original);
+			GenericDialog gd_detection =  new SetupDetectionDialog().showDialog(original);
 			if (gd_detection.wasCanceled()) {
 				return;
 			}
@@ -67,7 +67,10 @@ public class Track_Microtubules implements PlugIn {
 			double totalWeight = betaDist + betaIntensity + betaPredict;
 			
 			SpotTracker tracker = new SpotTracker(betaDist/totalWeight, betaIntensity/totalWeight, betaPredict/totalWeight);
-
+			
+			String color_by = gd_detection.getNextRadioButton();
+			
+			IJ.log("Coloring by "+ color_by);
 						
 			// Run difference of Gaussian
 			// To save memory, we do this on each slice seperately
