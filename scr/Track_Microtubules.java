@@ -75,7 +75,6 @@ public class Track_Microtubules implements PlugIn {
 			int nt = img.getNFrames();
 			ArrayList<Spot> spots[] = new Spots[nt];
 			for (int t = 0; t < nt; t++) {
-
 				img.setSlice(t + 1);
 				ImagePlus dog = detector.dog(img, sigmaDOG);
 				// Detect spots by detecting local maxima in DoG
@@ -101,7 +100,6 @@ public class Track_Microtubules implements PlugIn {
 			ArrayList[] speedDistribution = new ArrayList[nt]; 				// List of arraylists with speeds
 			ArrayList[] angleDistribution = new ArrayList[nt]; 				// List of arraylists with angles
 			for (int t = 0; t < nt; t++) {
-//				IJ.log("Time = "+t);
 				ArrayList<Double> lengths = new ArrayList<Double>(); // Arraylist of doubles
 				ArrayList<Double> speeds = new ArrayList<Double>(); // Arraylist of doubles
 				ArrayList<Double> angles = new ArrayList<Double>(); // Arraylist of doubles
@@ -135,8 +133,7 @@ public class Track_Microtubules implements PlugIn {
 			}
 			
 			// If the spot is at the end of the trace, 
-			// and if the trace is long enough, then draw its trace.
-//			drawSpots(overlayTraces, spots);
+			// and if the trace is longer than 5 frames, then draw its trace.
 			for (int t = 0; t < nt; t++) {
 				for (Spot spot : spots[t]) {
 					if (spot.isTraceEnd() & (spot.trace.size() > 5)){
@@ -146,15 +143,15 @@ public class Track_Microtubules implements PlugIn {
 			}
 			
 			// Add results to plots
-			Plot plotLength = new Plot("Results traces", "Time", "Trajectory lengts");
+			Plot plotLength = new Plot("Results traces", "Frame", "Trajectory lengts");
 			plotLength.add("circle", xArray, resultsLength);
 			plotLength.show();
 			
-			Plot plotSpeed = new Plot("Results", "Time", "Speed");
+			Plot plotSpeed = new Plot("Results", "Frame", "Speed");
 			plotSpeed.add("circle", xArray, resultsSpeed);
 			plotSpeed.show();
 			
-			Plot plotAngle = new Plot("Results", "Time", "Angle");
+			Plot plotAngle = new Plot("Results", "Frame", "Angle");
 			plotAngle.add("circle", xArray, resultsAngle);
 			plotAngle.show();
 			
